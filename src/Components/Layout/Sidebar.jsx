@@ -1,43 +1,23 @@
-import { 
-  FaHome, 
-  FaServer, 
-  FaUser, 
+import {
+  FaHome,
+  FaServer,
+  FaUser,
   FaQuestionCircle,
   FaSignOutAlt,
+  FaUserCircle,
   FaTimes
 } from 'react-icons/fa';
-import { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 
-const Sidebar = ({ isOpen, toggleSidebar, activeView, setActiveView, onNavigate }) => {
-  const sidebarRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile view and setup click outside handler
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    
-    const handleClickOutside = (event) => {
-      if (isOpen && isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        toggleSidebar();
-      }
-    };
-
-    // Initial check
-    handleResize();
-    
-    // Add event listeners
-    window.addEventListener('resize', handleResize);
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, isMobile, toggleSidebar]);
-
+const Sidebar = ({ 
+  isOpen, 
+  toggleSidebar, 
+  activeView, 
+  setActiveView, 
+  onNavigate,
+  user,
+  isDesktop
+}) => {
   const navItems = [
     { id: 'overview', icon: <FaHome />, label: 'Overview' },
     { id: 'devices', icon: <FaServer />, label: 'Devices' },
@@ -47,72 +27,104 @@ const Sidebar = ({ isOpen, toggleSidebar, activeView, setActiveView, onNavigate 
 
   const handleNavigation = (id) => {
     setActiveView(id);
-    if (isMobile) {
+    if (!isDesktop) {
       toggleSidebar();
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    onNavigate('login');
+  };
+
   return (
     <>
-      {/* Mobile Overlay - Only shown on mobile when sidebar is open */}
-      {isOpen && isMobile && (
-        <div className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden" />
+      {isOpen && !isDesktop && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30" 
+          onClick={toggleSidebar}
+        />
       )}
 
-      {/* Sidebar Container with ref for click detection */}
-      <div
-        ref={sidebarRef}
-        className={`fixed top-0 left-0 h-full w-64 bg-indigo-800 text-white shadow-xl transform transition-transform duration-300 ease-in-out z-40 ${
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-indigo-800 to-indigo-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        }`}
       >
-        {/* Sidebar Header with Close Button */}
-        <div className="p-4 border-b border-indigo-700 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Scrpcy</h2>
-          <button 
+        <div className="flex justify-between items-center p-4 border-b border-indigo-700/50">
+          <h2 className="text-xl font-bold">NetworkDash</h2>
+          <button
             onClick={toggleSidebar}
-            className="text-2xl hover:text-indigo-300 focus:outline-none lg:hidden"
+            className="text-white hover:text-indigo-300 focus:outline-none transition-colors"
             aria-label="Close sidebar"
           >
-            <FaTimes />
+            <FaTimes className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="p-4 overflow-y-auto h-[calc(100%-120px)]">
-          <ul className="space-y-2">
-            {navItems.map(item => (
+        {/* Rest of your sidebar content remains the same */}
+        <div className="p-4 border-b border-indigo-700/50">
+          <div className="flex items-center space-x-3 p-3">
+            <div className="relative">
+              <FaUserCircle className="h-10 w-10 text-indigo-200" />
+              <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-400 rounded-full border-2 border-indigo-800"></span>
+            </div>
+            <div>
+              <p className="font-medium">{user?.name || 'User'}</p>
+              <p className="text-xs text-indigo-200">{user?.email || 'user@example.com'}</p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="p-4 h-[calc(100%-180px)] overflow-y-auto">
+          <ul className="space-y-1">
+            {navItems.map((item) => (
               <li key={item.id}>
                 <button
                   onClick={() => handleNavigation(item.id)}
-                  className={`flex items-center space-x-3 p-3 rounded-lg w-full transition-colors ${
-                    activeView === item.id ? 'bg-indigo-700' : 'hover:bg-indigo-700'
+                  className={`flex items-center w-full p-3 rounded-lg transition-all ${
+                    activeView === item.id
+                      ? 'bg-indigo-600/80 shadow-md text-white'
+                      : 'hover:bg-indigo-700/50 text-indigo-100'
                   }`}
                 >
-                  <span className="text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="text-lg mr-3">{item.icon}</span>
+                  <span className="font-medium">{item.label}</span>
+                  {activeView === item.id && (
+                    <span className="ml-auto w-2 h-2 bg-white rounded-full"></span>
+                  )}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-indigo-700">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-indigo-700/50 bg-indigo-800/50">
           <button
-            onClick={() => {
-              onNavigate('login');
-              if (isMobile) toggleSidebar();
-            }}
-            className="flex items-center space-x-3 p-3 rounded-lg w-full hover:bg-indigo-700 transition-colors"
+            onClick={handleLogout}
+            className="flex items-center w-full p-3 rounded-lg hover:bg-indigo-700/50 text-indigo-100 hover:text-white transition-colors"
           >
-            <span className="text-lg"><FaSignOutAlt /></span>
-            <span>Log Out</span>
+            <FaSignOutAlt className="mr-3" />
+            <span className="font-medium">Log Out</span>
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
+};
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  toggleSidebar: PropTypes.func.isRequired,
+  activeView: PropTypes.string.isRequired,
+  setActiveView: PropTypes.func.isRequired,
+  onNavigate: PropTypes.func.isRequired,
+  user: PropTypes.shape({
+    name: PropTypes.string,
+    email: PropTypes.string,
+  }),
+  isDesktop: PropTypes.bool.isRequired,
 };
 
 export default Sidebar;

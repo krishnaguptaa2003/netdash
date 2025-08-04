@@ -1,115 +1,78 @@
 const { getClient } = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-// Email configuration
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_PORT === '465',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const { action, name, email, password } = JSON.parse(event.body);
+  const { action, name, email, password, confirmPassword } = JSON.parse(event.body);
   const client = await getClient();
 
   try {
     if (action === 'signup') {
-      // Check if user exists
-      const userCheck = await client.query(
-        'SELECT id FROM users WHERE email = $1', 
-        [email]
-      );
+      // Password validation
+      if (password !== confirmPassword) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Passwords do not match' }) };
+      }
 
+      // Check if user exists
+      const userCheck = await client.query('SELECT id FROM users WHERE email = $1', [email]);
       if (userCheck.rows.length > 0) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Email already exists' }) };
       }
 
-      // Hash password and create OTP
+      // Hash password and create user
       const hashedPassword = await bcrypt.hash(password, 10);
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-      // Create user
-      const newUser = await client.query(
-        `INSERT INTO users (name, email, password_hash, otp) 
-         VALUES ($1, $2, $3, $4) 
+      const { rows } = await client.query(
+        `INSERT INTO users (name, email, password_hash) 
+         VALUES ($1, $2, $3) 
          RETURNING id, name, email, is_verified`,
-        [name, email, hashedPassword, otp]
+        [name, email, hashedPassword]
       );
-
-      // Send verification email
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: email,
-        subject: 'Verify Your Scrpcy Account',
-        html: `
-          <h2>Welcome to Scrpcy!</h2>
-          <p>Your verification code is: <strong>${otp}</strong></p>
-          <p>This code will expire in 10 minutes.</p>
-        `
-      });
 
       return { 
         statusCode: 200, 
         body: JSON.stringify({ 
-          message: 'Verification email sent',
-          user: newUser.rows[0]
+          user: rows[0],
+          message: 'Signup successful' 
         }) 
       };
     }
     else if (action === 'login') {
-      const userResult = await client.query(
+      const { rows } = await client.query(
         `SELECT id, name, email, password_hash, is_verified 
          FROM users WHERE email = $1`, 
         [email]
       );
 
-      if (userResult.rows.length === 0) {
+      if (rows.length === 0 || !(await bcrypt.compare(password, rows[0].password_hash))) {
         return { statusCode: 401, body: JSON.stringify({ error: 'Invalid credentials' }) };
-      }
-
-      const user = userResult.rows[0];
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-
-      if (!isMatch) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Invalid credentials' }) };
-      }
-
-      if (!user.is_verified) {
-        return { statusCode: 403, body: JSON.stringify({ error: 'Email not verified' }) };
       }
 
       const token = jwt.sign(
-        { userId: user.id },
+        { userId: rows[0].id },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        { expiresIn: process.env.JWT_EXPIRES_IN }
       );
 
       return {
         statusCode: 200,
         body: JSON.stringify({ 
-          token, 
-          user: { 
-            id: user.id, 
-            name: user.name,
-            email: user.email 
-          } 
+          token,
+          user: {
+            id: rows[0].id,
+            name: rows[0].name,
+            email: rows[0].email
+          }
         })
       };
     }
-
+    
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid action' }) };
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('Error:', error);
     return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
   } finally {
     await client.end();

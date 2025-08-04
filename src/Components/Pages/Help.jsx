@@ -53,22 +53,22 @@ const Help = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto xl:max-w-[calc(100%-200px)] py-4 md:py-6">
       {/* Page Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <FaQuestionCircle className="text-indigo-600 text-3xl" />
+      <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+        <FaQuestionCircle className="text-indigo-600 text-2xl md:text-3xl" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Help Center</h1>
-          <p className="text-gray-600">Find answers to common questions and get support</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Help Center</h1>
+          <p className="text-gray-600 text-sm md:text-base">Find answers to common questions and get support</p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('faq')}
-            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'faq'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -78,7 +78,7 @@ const Help = () => {
           </button>
           <button
             onClick={() => setActiveTab('guides')}
-            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'guides'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -88,7 +88,7 @@ const Help = () => {
           </button>
           <button
             onClick={() => setActiveTab('contact')}
-            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'contact'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -101,14 +101,14 @@ const Help = () => {
 
       {/* Tab Content */}
       {activeTab === 'faq' && (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {faqs.map(faq => (
             <div key={faq.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <button
                 onClick={() => toggleItem(faq.id)}
-                className="w-full flex justify-between items-center p-4 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex justify-between items-center p-3 md:p-4 text-left hover:bg-gray-50 transition-colors"
               >
-                <span className="font-medium">{faq.question}</span>
+                <span className="font-medium text-sm md:text-base">{faq.question}</span>
                 <svg
                   className={`w-5 h-5 text-gray-500 transform transition-transform ${
                     expandedItems.includes(faq.id) ? 'rotate-180' : ''
@@ -121,7 +121,7 @@ const Help = () => {
                 </svg>
               </button>
               {expandedItems.includes(faq.id) && (
-                <div className="p-4 pt-0 border-t border-gray-200 text-gray-600">
+                <div className="p-3 md:p-4 pt-0 border-t border-gray-200 text-gray-600 text-sm md:text-base">
                   {faq.answer}
                 </div>
               )}
@@ -131,11 +131,11 @@ const Help = () => {
       )}
 
       {activeTab === 'guides' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {guides.map((guide, index) => (
-            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div key={index} className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
               <h3 className="font-medium text-lg mb-3">{guide.title}</h3>
-              <ul className="space-y-2 text-gray-600">
+              <ul className="space-y-2 text-gray-600 text-sm md:text-base">
                 {guide.steps.map((step, i) => (
                   <li key={i} className="flex items-start">
                     <span className="mr-2 text-indigo-500">•</span>
@@ -149,44 +149,44 @@ const Help = () => {
       )}
 
       {activeTab === 'contact' && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="font-medium text-lg mb-4">Contact Our Support Team</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="font-medium text-lg mb-4 md:mb-6">Contact Our Support Team</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-full bg-indigo-100 text-indigo-600">
+                <div className="p-2 md:p-3 rounded-full bg-indigo-100 text-indigo-600">
                   <FaEnvelope />
                 </div>
                 <div>
-                  <h4 className="font-medium">Email Us</h4>
-                  <p className="text-gray-600 text-sm">support@scrpcy.com</p>
+                  <h4 className="font-medium text-sm md:text-base">Email Us</h4>
+                  <p className="text-gray-600 text-xs md:text-sm">support@scrpcy.com</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+                <div className="p-2 md:p-3 rounded-full bg-purple-100 text-purple-600">
                   <FaDiscord />
                 </div>
                 <div>
-                  <h4 className="font-medium">Join Our Discord</h4>
-                  <p className="text-gray-600 text-sm">discord.gg/scrpcy</p>
+                  <h4 className="font-medium text-sm md:text-base">Join Our Discord</h4>
+                  <p className="text-gray-600 text-xs md:text-sm">discord.gg/scrpcy</p>
                 </div>
               </div>
             </div>
             <div>
-              <form className="space-y-4">
+              <form className="space-y-3 md:space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
-                  <input type="email" className="w-full p-2 border border-gray-300 rounded-lg" />
+                  <input type="email" className="w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                  <input type="text" className="w-full p-2 border border-gray-300 rounded-lg" />
+                  <input type="text" className="w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                  <textarea rows="4" className="w-full p-2 border border-gray-300 rounded-lg"></textarea>
+                  <textarea rows="4" className="w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base"></textarea>
                 </div>
-                <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm md:text-base">
                   Send Message
                 </button>
               </form>

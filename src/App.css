@@ -1,9 +1,15 @@
-@keyframes slideDown {
-  from { top: -60px; }
-  to { top: 0; }
+/* Prevent layout shifting */
+html {
+  overflow-x: hidden;
 }
 
-@keyframes fadeIn {
-  from {opacity: 0; }
-  to {opacity: 1; }
+/* Smooth transitions */
+.transition-margin {
+  transition-property: margin;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+main {
+  transition: margin 0.3s ease-in-out;
 }

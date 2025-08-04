@@ -1,5 +1,5 @@
-exports.handler = async (event) => {
-  // This is a client-side operation - just return success
+// This is a client-side operation - just return success
+exports.handler = async () => {
   return {
     statusCode: 200,
     body: JSON.stringify({ message: 'Logged out successfully' }),

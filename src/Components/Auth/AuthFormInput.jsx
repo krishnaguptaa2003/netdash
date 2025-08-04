@@ -9,11 +9,11 @@ const AuthFormInput = ({
   onToggle,
   ...props
 }) => (
-  <div className="space-y-2">
+  <div className="space-y-2 w-full">
     <label htmlFor={id} className="block text-sm font-medium text-gray-700">
       {label}
     </label>
-    <div className="relative rounded-md shadow-sm">
+    <div className="relative rounded-md shadow-sm w-full">
       {icon && (
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
           {icon}
@@ -22,7 +22,7 @@ const AuthFormInput = ({
       <input
         id={id}
         type={type}
-        className={`block w-full ${icon ? 'pl-10' : 'pl-3'} pr-10 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200`}
+        className={`block w-full ${icon ? 'pl-10' : 'pl-3'} pr-10 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-sm sm:text-base`}
         {...props}
       />
       {showToggle && (
