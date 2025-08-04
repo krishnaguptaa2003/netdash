@@ -21,41 +21,46 @@ const Signup = ({ onNavigate }) => {
 
   // In your Signup.jsx
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setIsLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match");
-      return;
+  try {
+    const response = await fetch('/.netlify/functions/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'signup',
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
+      }),
+    });
+
+    // First check if response is OK
+    if (!response.ok) {
+      // Try to parse error response
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      throw new Error(errorData.error || 'Signup failed');
     }
 
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'signup',
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || 'Signup failed');
-
-      // Store user data and redirect
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onNavigate('dashboard');
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Process successful response
+    const data = await response.json();
+    localStorage.setItem('user', JSON.stringify(data.user));
+    onNavigate('dashboard');
+    
+  } catch (error) {
+    console.error('Signup error:', error);
+    alert(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="w-full px-4 sm:px-6 md:px-8 lg:px-20 xl:px-24 mx-auto max-w-7xl">

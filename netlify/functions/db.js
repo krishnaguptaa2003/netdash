@@ -1,13 +1,20 @@
 const { Client } = require('pg');
 
-// Database connection helper
 const getClient = async () => {
   const client = new Client({
     connectionString: process.env.NETLIFY_DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: {
+      rejectUnauthorized: false // Required for Neon
+    }
   });
-  await client.connect();
-  return client;
+  
+  try {
+    await client.connect();
+    return client;
+  } catch (err) {
+    console.error('Database connection error:', err);
+    throw err;
+  }
 };
 
 module.exports = { getClient };

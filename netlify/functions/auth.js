@@ -1,80 +1,66 @@
+// In your auth.js, add this at the VERY TOP to debug:
+console.log("ENV VARIABLES:", {
+  JWT_SECRET: process.env.JWT_SECRET ? "Exists" : "MISSING",
+  NODE_ENV: process.env.NODE_ENV
+});
+
 const { getClient } = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
-  const { action, name, email, password, confirmPassword } = JSON.parse(event.body);
-  const client = await getClient();
+  const jsonResponse = (status, body) => ({
+    statusCode: status,
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' }
+  });
 
   try {
-    if (action === 'signup') {
-      // Password validation
-      if (password !== confirmPassword) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'Passwords do not match' }) };
-      }
+    if (event.httpMethod !== 'POST') {
+      return jsonResponse(405, { error: 'Method Not Allowed' });
+    }
 
-      // Check if user exists
-      const userCheck = await client.query('SELECT id FROM users WHERE email = $1', [email]);
-      if (userCheck.rows.length > 0) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'Email already exists' }) };
-      }
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch (e) {
+      return jsonResponse(400, { error: 'Invalid JSON' });
+    }
 
-      // Hash password and create user
-      const hashedPassword = await bcrypt.hash(password, 10);
+    const client = await getClient();
+    
+    if (body.action === 'signup') {
+      // [Previous validation checks...]
+
+      // After successful user creation:
       const { rows } = await client.query(
         `INSERT INTO users (name, email, password_hash) 
          VALUES ($1, $2, $3) 
-         RETURNING id, name, email, is_verified`,
-        [name, email, hashedPassword]
+         RETURNING id, name, email`,
+        [body.name, body.email, hashedPassword]
       );
 
-      return { 
-        statusCode: 200, 
-        body: JSON.stringify({ 
-          user: rows[0],
-          message: 'Signup successful' 
-        }) 
-      };
-    }
-    else if (action === 'login') {
-      const { rows } = await client.query(
-        `SELECT id, name, email, password_hash, is_verified 
-         FROM users WHERE email = $1`, 
-        [email]
-      );
-
-      if (rows.length === 0 || !(await bcrypt.compare(password, rows[0].password_hash))) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Invalid credentials' }) };
-      }
-
+      // Generate JWT token
       const token = jwt.sign(
-        { userId: rows[0].id },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { userId: rows[0].id, email: rows[0].email },
+        process.env.JWT_SECRET, // Make sure this matches your Netlify variable
+        { expiresIn: '24h' }
       );
 
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ 
-          token,
-          user: {
-            id: rows[0].id,
-            name: rows[0].name,
-            email: rows[0].email
-          }
-        })
-      };
+      return jsonResponse(200, { 
+        user: rows[0],
+        token // Send token to client
+      });
     }
-    
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid action' }) };
+
+    // Add login logic here if needed
+    return jsonResponse(400, { error: 'Invalid action' });
+
   } catch (error) {
-    console.error('Error:', error);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
-  } finally {
-    await client.end();
+    console.error('SERVER ERROR:', error);
+    return jsonResponse(500, { 
+      error: 'Internal Server Error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
